@@ -1,0 +1,90 @@
+﻿@model StarterM.ViewModels.DailyTripCreateViewModel
+@{
+    ViewData["Title"] = "新增每日差旅";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var minDate = DateTime.Today.AddDays(-90).ToString("yyyy-MM-dd");
+    var maxDate = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+
+@section Styles {
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<style>
+    /* ===== 表單寬度 ===== */
+    .basic-form {
+        max-width: 800px;   
+        margin: 0 auto;
+    }
+    /* ===== flatpickr ===== */
+    .flatpickr-input {
+        background-color: #fff;
+    }
+</style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="fas fa-plus-square text-primary fa-lg mr-2"></i>新增差旅日期</h1>
+        </div>
+    </div>
+</div>
+
+
+<div class="card">            
+    <div class="card-body">
+        <div class="basic-form">
+            <form asp-action="CreateTrip" method="post">
+                @Html.AntiForgeryToken()
+                <input asp-for="ApplicationId" type="hidden" />
+                <div asp-validation-summary="All" class="text-danger"></div>  
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" asp-for="Date">出差日期</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input id="datePicker" asp-for="Date" type="text" class="form-control form-control-lg" placeholder="請選擇日期" />
+                        <span asp-validation-for="Date" class="text-danger ml-1">*</span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" asp-for="TripReason">出差事由</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input  class="form-control form-control-lg" asp-for="TripReason" placeholder="例如：拜訪客戶、參加會議" />
+                        <span asp-validation-for="TripReason" class="text-danger ml-1">*</span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-save mr-1"></i> 建立並新增費用</button>
+                        @if (Model.ApplicationId.HasValue)
+                        {
+                            <a asp-controller="Application" asp-action="Details" asp-route-id="@Model.ApplicationId.Value" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> 返回申請單
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-arrow-left mr-1"></i> 返回
+                            </a>
+                        }
+                    </div>
+                </div>                     
+            </form>
+        </div>
+    </div>
+</div>
+            
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+<script>
+    flatpickr("#datePicker", {
+        dateFormat: "Y-m-d",   // 跟後端格式一致
+        locale: "zh",          // 中文
+        allowInput: true,      // 可以手打
+        minDate: "@minDate",
+        maxDate: "@maxDate"
+    });
+</script>       
+}       

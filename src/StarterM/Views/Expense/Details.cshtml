@@ -1,0 +1,84 @@
+﻿@model StarterM.Models.ExpenseRecord
+@{
+    ViewData["Title"] = "費用詳情";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="fas fa-eye text-primary fa-lg mr-2"></i>費用紀錄詳情</h1>                         
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">日期</dt>
+                    <dd class="col-sm-9">@Model.Date.ToString("yyyy-MM-dd")</dd>
+
+                    <dt class="col-sm-3">費用分類</dt>
+                    <dd class="col-sm-9">@(Model.ExpenseCategory?.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">費用項目</dt>
+                    <dd class="col-sm-9">@(Model.ExpenseItem?.Name ?? "-")</dd>
+
+                    <dt class="col-sm-3">金額</dt>
+                    <dd class="col-sm-9">NT$ @Model.Amount.ToString("N0")</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.Origin) || !string.IsNullOrEmpty(Model.Destination))
+                    {
+                        <dt class="col-sm-3">起訖</dt>
+                        <dd class="col-sm-9">
+                            <div class="row align-items-center">
+                                <div class="col-5">@((string.IsNullOrEmpty(Model.Origin) ? "-" : Model.Origin))</div>
+                                <div class="col-2 text-center" style="font-size:1.25rem;">
+                                    <span title='@(Model.IsRoundTrip ? "往返" : "單程")'>@(Model.IsRoundTrip ? "↔" : "→")</span>
+                                </div>
+                                <div class="col-5 text-right">@((string.IsNullOrEmpty(Model.Destination) ? "-" : Model.Destination))</div>
+                            </div>
+                        </dd>
+                    }
+
+                    <dt class="col-sm-3">公里數</dt>
+                    <dd class="col-sm-9">@(Model.DistanceKm?.ToString("N1") ?? "-") km</dd>
+
+                    <dt class="col-sm-3">說明</dt>
+                    <dd class="col-sm-9">@(Model.Description ?? "-")</dd>
+
+                    <dt class="col-sm-3">建立時間</dt>
+                    <dd class="col-sm-9">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                    @if (Model.CarbonEmission != null)
+                    {
+                        <dt class="col-sm-3">碳排放量</dt>
+                        <dd class="col-sm-9">
+                            <span class="text-success">
+                                <i class="fas fa-leaf"></i> @Model.CarbonEmission.TotalCo2.ToString("N4") kgCO₂e
+                            </span>
+                            <small class="text-muted">（@Model.CarbonEmission.VehicleType, @Model.CarbonEmission.Co2PerKm kgCO₂/km × @Model.CarbonEmission.DistanceKm km）</small>
+                        </dd>
+                    }
+                </dl>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            @if (Model.DailyTripId > 0)
+            {
+                <a asp-action="TripDetails" asp-route-id="@Model.DailyTripId" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回差旅明細
+                </a>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            }
+        </div>
+    </div>
+</div>

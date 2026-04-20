@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "費率管理首頁";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4">
+    <h2><i class="mb-3 fas fa-dollar-sign"></i> 費率管理</h2>    
+    <p class="text-muted">選擇要維護的差旅費率項目：</p>
+    <div class="row justify-content-center homepage-row">
+        <div class="col-md-4 mb-3">
+            <a asp-controller="Admin" asp-action="MealAllowance" class="card text-center shadow-sm homepage-card-link">
+                <div class="card-body">
+                    <i class="fas fa-utensils fa-3x text-primary mb-3"></i>
+                    <h5>膳雜費率</h5>
+                    <p class="text-muted">設定每日膳雜費率與歷史紀錄</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4 mb-3">
+            <a asp-controller="Admin" asp-action="CarAllowance" class="card text-center shadow-sm homepage-card-link">
+                <div class="card-body">
+                    <i class="fas fa-car fa-3x text-warning mb-3"></i>
+                    <h5>里程補助</h5>
+                    <p class="text-muted">設定自用車里程補助費率與歷史紀錄</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>

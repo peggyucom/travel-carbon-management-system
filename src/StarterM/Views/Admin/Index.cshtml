@@ -1,0 +1,133 @@
+@model List<StarterM.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "員工管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* 最後一列底線 */
+        .table tbody tr:last-child td {
+            border-bottom: 1px solid gray;
+        }  
+
+        /* 灰色按鈕 */
+        .badge-inactive {
+            background-color: #6c757d;
+            color: #fff;
+        }    
+    </style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="icon icon-users-mm text-primary fa-lg mr-2"></i> 員工管理</h1>
+            <div class="mt-3">
+                <a asp-action="Create" class="btn btn-primary">
+                    <i class="icon icon-single-04"></i> 新增員工
+                </a>
+            </div>             
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table primary-table-bordered table-hover" id="adminEmployeeTable">
+            <thead class="thead-primary">
+                <tr>
+                    <th class="text-center">姓名</th>
+                    <th class="text-center">電子郵件</th>
+                    <th class="text-center">狀態</th>
+                    <th class="text-center">建立時間</th>
+                    <th class="text-center">更新時間</th>
+                    <th class="text-center">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var emp in Model)
+                {
+                    <tr>
+                        <td class="text-center"><i class="fas fa-user"></i> @emp.Name</td>
+                        <td class="text-center">@emp.Email</td>
+                        <td class="text-center">
+                            @if (emp.IsActive)
+                            {
+                                <span class="badge badge-success"><i class="fas fa-check-circle"></i> 啟用中</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-inactive"><i class="fas fa-ban"></i> 已停用</span>
+                            }
+                        </td>
+                        <td class="text-center">@emp.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                        <td class="text-center">@emp.UpdatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-center">
+                            @if (emp.IsActive)
+                            {
+                                <form asp-action="Deactivate" asp-route-id="@emp.Id" method="post" class="d-inline confirmable-form" data-confirm="確定要停用「@emp.Name」的系統使用權限？">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-ban"></i> 停用
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <form asp-action="Activate" asp-route-id="@emp.Id" method="post" class="d-inline confirmable-form" data-confirm="確定要啟用「@emp.Name」的系統使用權限？">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-check-circle"></i> 啟用
+                                    </button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8 col-lg-6">
+            <div class="alert alert-primary text-center mb-0">
+                <i class="fas fa-info-circle mr-2"></i>
+                目前尚無員工，請點擊「新增員工」。
+            </div>
+        </div>
+    </div>
+}
+
+
+@section Scripts {
+<script>
+  $(function () {
+        var tables = {};
+
+        function initTable(id, orderCol) {
+            var dt = $('#' + id).DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[orderCol ?? 0, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                columnDefs: [
+                    { orderable: false, targets: -1 }
+                ],
+                dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>t<"row"<"col-sm-6"i><"col-sm-6"p>>'
+            });
+            tables[id] = dt;
+        }
+
+        if ($('#adminEmployeeTable').length) initTable('adminEmployeeTable', 0);     
+        
+    });
+
+    
+</script>
+}

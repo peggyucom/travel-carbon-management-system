@@ -1,0 +1,359 @@
+@model StarterM.ViewModels.ApplicationDetailViewModel
+@{
+    var dateRange = Model.StartDate != default && Model.EndDate != default
+        ? $"{Model.StartDate:yyyy/MM/dd} ~ {Model.EndDate:yyyy/MM/dd}"
+        : "-";
+    var canEditApplication = !User.IsInRole("Manager")
+        && (Model.StatusCode == "Draft" || Model.StatusCode == "Rejected");
+    ViewData["Title"] = $"差旅申請單詳情 - {dateRange}";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        @* dd.dt樣式 *@
+        .info-label {
+            color: #6c757d;
+            font-size: 1rem;      
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: #343a40;
+            font-size: 1.2rem;    
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .card dl dt {
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+
+        .card dl dd {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        @* alert *@
+        .snapshot-banner {
+            background: #fff8e8;
+            border: 1px solid #f6d79d;
+            border-left: 4px solid #f0ad4e;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            min-height: 48px;
+        }
+
+        .snapshot-icon {
+            color: #d39e00;
+        }
+
+        .snapshot-text {
+            color: #6b4f1d;
+            font-weight: 500;
+        }
+
+        .snapshot-time {
+            color: #8a8f98;
+        }
+
+        .snapshot-banner .btn {
+            @* white-space: nowrap; *@
+            border-left: 4px solid #f0ad4e;
+        }
+     
+    </style>
+}
+
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="fas fa-file-alt text-primary fa-lg mr-2"></i>差旅申請單詳情</h1> 
+        </div>
+        <div class="mt-3 d-flex justify-content-between align-items-center">            
+            <h4>@dateRange</h4>             
+            @if (User.IsInRole("Manager"))
+            {
+                <a asp-controller="Application" asp-action="AuditHistory" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            }
+            else
+            {
+                <a asp-controller="Application" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            }                    
+        </div>
+    </div>
+</div>
+
+@if (Model.IsSnapshotView)
+{
+    <div class="snapshot-banner d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center flex-wrap">
+            <i class="fas fa-history mr-2 snapshot-icon"></i>
+            <span class="snapshot-text mr-3">顯示主管駁回時的紀錄</span>
+
+            @if (Model.SnapshotCreatedAt.HasValue)
+            {
+                <small class="snapshot-time">
+                    紀錄時間：@Model.SnapshotCreatedAt.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm")
+                </small>
+            }
+        </div>
+
+        @if (Model.StatusCode == "Voided" && Model.VoidedFromStatusCode == "Rejected")
+        {
+            <a asp-action="Details" asp-route-id="@Model.ApplicationId" class="btn btn-sm btn-outline-warning mt-2 mt-md-0">
+                <i class="fas fa-arrow-left mr-1"></i> 返回申請單
+            </a>
+        }
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body">
+                <h3>申請單資訊</h3>
+                <dl>
+                    <dt class="info-label">員工</dt>
+                    <dd class="info-value">@Model.EmployeeName</dd>
+                    <dt class="info-label">部門</dt>
+                    <dd class="info-value">@(string.IsNullOrEmpty(Model.DepartmentName) ? "-" : Model.DepartmentName)</dd>
+                    <dt class="info-label">出差日</dt>
+                    <dd class="info-value">@dateRange</dd>
+                    <dt class="info-label">狀態</dt>
+                    <dd class="info-value">
+                        @{
+                            var badgeClass = Model.StatusCode switch
+                            {
+                                "Draft" => "badge-secondary",
+                                "Submitted" => "badge-info",
+                                "Approved" => "badge-success",
+                                "Rejected" => "badge-warning",
+                                "Voided" => "badge-dark",
+                                _ => "badge-secondary"
+                            };
+                        }
+                        <span class="badge @badgeClass">@Model.StatusName</span>
+                    </dd>
+                    <dt class="info-label">總金額</dt>
+                    <dd class="info-value">NT$ @Model.TotalAmount.ToString("N0")</dd>
+                    @if (Model.SubmittedAt.HasValue)
+                    {
+                        <dt class="info-label">送出時間</dt>
+                        <dd class="info-value">@Model.SubmittedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</dd>
+                    }
+                    @if (Model.ApprovedAt.HasValue)
+                    {
+                        <dt class="info-label">核准時間</dt>
+                        <dd class="info-value">@Model.ApprovedAt?.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</dd>
+                        <dt class="info-label">核准者</dt>
+                        <dd class="info-value">@Model.ApproverName</dd>
+                    }
+                </dl>
+
+                <!-- 操作按鈕 -->
+                @if (canEditApplication)
+                {
+                    <form asp-action="Submit" asp-route-id="@Model.ApplicationId" method="post" class="confirmable-form" data-confirm="確定要送出審核嗎？">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-paper-plane"></i> 送出審核
+                        </button>
+                    </form>
+
+                    <a asp-controller="Expense" asp-action="CreateTrip" asp-route-applicationId="@Model.ApplicationId" class="btn btn-outline-success btn-block mt-2">
+                        <i class="fas fa-plus"></i> 新增每日差旅
+                    </a>
+                }
+
+               
+                @if (!User.IsInRole("Manager") && (Model.StatusCode == "Draft" || Model.StatusCode == "Rejected"))
+                {
+                    <form asp-action="VoidApplication" asp-route-id="@Model.ApplicationId" method="post" class="mt-2 confirmable-form" data-confirm="確定要作廢這張申請單嗎？作廢後不可再編輯或送審。">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-dark btn-block">
+                            <i class="fas fa-ban"></i> 作廢
+                        </button>
+                    </form>
+                }
+
+                @if (User.IsInRole("Manager") && Model.StatusCode == "Submitted")
+                {
+                    <form asp-action="Approve" asp-route-id="@Model.ApplicationId" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-check"></i> 審核通過
+                        </button>
+                    </form>
+
+                    <form asp-action="Reject" asp-route-id="@Model.ApplicationId" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <textarea name="comment" class="form-control" placeholder="駁回原因（必填）" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-danger btn-block">
+                            <i class="fas fa-times"></i> 駁回
+                        </button>
+                    </form>
+                }
+
+                @if (User.IsInRole("Manager") && Model.IsSnapshotView && Model.StatusCode != "Voided")
+                {
+                    <button type="button" class="btn btn-secondary btn-block mt-2" disabled>
+                        <i class="fas fa-hourglass-half"></i> 目前顯示駁回紀錄，待員工重新送審
+                    </button>
+                }
+
+                @if (Model.StatusCode == "Voided")
+                {
+                    <button type="button" class="btn btn-dark btn-block mt-2" disabled>
+                        <i class="fas fa-ban"></i> 申請單已作廢
+                    </button>
+                    @if (Model.VoidedFromStatusCode == "Rejected" && Model.HasRejectedSnapshot)
+                    {
+                        <a asp-action="ViewSnapshot" asp-route-id="@Model.ApplicationId" class="btn btn-warning btn-block mt-2">
+                            <i class="fas fa-comment-dots"></i> 查看駁回紀錄
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+
+
+    <div class="col-md-8">        
+        <div class="card mb-3">            
+            <div class="card-body">
+                <table class="table primary-table-bordered table-hover" id="Details">
+                    <thead class="thead-primary">
+                        <tr>
+                            <th>日期</th>
+                            <th>出差事由</th>
+                            <th class="text-right">國內交通費</th>
+                            <th class="text-right">膳雜費</th>
+                            <th class="text-right">住宿費</th>
+                            <th class="text-right">其他</th>
+                            <th class="text-right">當日合計</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var day in Model.DailyTrips)
+                        {
+                            <tr>
+                                <td>@day.Date.ToString("yyyy/MM/dd")</td>
+                                <td>@day.TripReason</td>
+                                <td class="text-right">@(day.TransportTotal > 0 ? day.TransportTotal.ToString("N0") : "-")</td>
+                                <td class="text-right">@(day.MealTotal > 0 ? day.MealTotal.ToString("N0") : "-")</td>
+                                <td class="text-right">@(day.LodgingTotal > 0 ? day.LodgingTotal.ToString("N0") : "-")</td>
+                                <td class="text-right">@(day.OtherTotal > 0 ? day.OtherTotal.ToString("N0") : "-")</td>
+                                <td class="text-right font-weight-bold">@day.DayTotal.ToString("N0")</td>
+                                <td>
+                                    @if (canEditApplication)
+                                    {
+                                        <a asp-controller="Expense" asp-action="TripDetails" asp-route-id="@day.DailyTripId" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-pen"></i> 
+                                        </a>
+                                    }
+                                    else if (Model.IsSnapshotView)
+                                    {
+                                        <a asp-controller="Application" asp-action="TripSnapshot" asp-route-id="@Model.ApplicationId" asp-route-dailyTripId="@day.DailyTripId" class="btn btn-sm btn-outline-secondary" title="檢視各項費用明細">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a asp-controller="Expense" asp-action="TripDetails" asp-route-id="@day.DailyTripId" class="btn btn-sm btn-outline-secondary" title="檢視各項費用明細">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-weight-bold bg-light border-top">
+                            <td colspan="2" class="text-right">合計</td>
+                            <td class="text-right text-primary">@Model.DailyTrips.Sum(d => d.TransportTotal).ToString("N0")</td>
+                            <td class="text-right text-primary">@Model.DailyTrips.Sum(d => d.MealTotal).ToString("N0")</td>
+                            <td class="text-right text-primary">@Model.DailyTrips.Sum(d => d.LodgingTotal).ToString("N0")</td>
+                            <td class="text-right text-primary">@Model.DailyTrips.Sum(d => d.OtherTotal).ToString("N0")</td>
+                            <td class="text-right text-primary">@Model.TotalAmount.ToString("N0")</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <!-- 審核歷程 -->
+        @if (Model.ApprovalHistories != null && Model.ApprovalHistories.Any())
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">                    
+                    <div class="text-muted mb-2">
+                        <i class="fas fa-history mr-1"></i> 審核歷程
+                    </div>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>時間</th>
+                                <th>動作</th>
+                                <th>操作者</th>
+                                <th>備註</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var h in Model.ApprovalHistories)
+                            {
+                                <tr>
+                                    <td>@h.CreatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</td>
+                                    <td>@h.Action</td>
+                                    <td>@h.ActorName</td>
+                                    <td>@(h.Comment ?? "")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(function () {
+            var table = $('#Details').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[1, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                columnDefs: [
+                    { orderable: false, targets: [7] },
+                    { searchable: true, targets: [7] }
+                ],
+                dom: '<"row align-items-center mb-3"<"col-sm-6"l><"col-sm-6 d-flex justify-content-end align-items-center"f>>t<"row"<"col-sm-6"i><"col-sm-6"p>>',
+
+                initComplete: function () {
+                    var $filter = $('#Details_filter');
+
+                    $filter.addClass('d-flex align-items-center');
+                    $filter.find('label').addClass('mb-0 mr-2');
+                }
+            });
+        });
+    </script>
+}

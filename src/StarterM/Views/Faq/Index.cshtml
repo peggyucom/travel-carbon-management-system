@@ -1,0 +1,144 @@
+@model List<StarterM.Models.Faq>
+@{
+    ViewData["Title"] = "FAQ";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var keyword = ViewData["Keyword"] as string;
+    var category = ViewData["Category"] as string;
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="icon icon-book-open-2 text-primary fa-lg mr-2"></i>常見問題</h1>      
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+    <style>
+
+    .accordion-active-header .accordion__header:not(.collapsed) {
+    background-color: #593BDB;
+    color: #fff;
+    }
+
+    .accordion-active-header .accordion__header:not(.collapsed) .badge-process,
+    .accordion-active-header .accordion__header:not(.collapsed) .badge-desc {
+        color: #6f42c1;
+        border-color: #fff;
+        background-color: #fff;
+    }
+
+    .accordion__header:hover {
+    background-color: #f3efff;
+    }
+
+    .badge-process {
+    color: #6f42c1;
+    border: 1px solid #6f42c1;
+    background-color: transparent;
+    }
+
+    .badge-desc {
+        color: #6c757d;
+        border: 1px solid #6c757d;
+        background-color: transparent;
+    }
+
+    @* 不要太寬 *@
+    .faq-page-wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    }
+
+    #faqAccordion .accordion__item,
+    #faqAccordion .accordion__header,
+    #faqAccordion .accordion__body {
+        width: 100%;
+    }
+    </style>
+}
+<div class="faq-page-wrap">
+    <!-- 搜尋與分類篩選 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" id="faqSearch" class="form-control" placeholder="輸入關鍵字搜尋..."
+                    value="@keyword" />
+                <div class="input-group-append">
+                    <button class="btn btn-primary" id="searchBtn">
+                        <i class="fas fa-search"></i> 搜尋
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select id="categoryFilter" class="form-control">
+                <option value="">全部分類</option>
+                <option value="報支流程" selected="@(category == "報支流程")">報支流程</option>
+                <option value="費用說明" selected="@(category == "費用說明")">費用說明</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- FAQ 列表（手風琴） -->
+    <div class="accordion accordion-active-header" id="faqAccordion">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var faq = Model[i];
+            <div class="accordion__item">
+                <div class="accordion__header @(i > 0 ? "collapsed" : "")"
+                    data-toggle="collapse"
+                    data-target="#collapse@(i)"
+                    aria-expanded="@(i == 0 ? "true" : "false")">
+                    
+                    <span class="accordion__header--icon"></span>
+                    <span class="accordion__header--text">
+                        @{
+                            var badgeClass = faq.Category == "報支流程"
+                                ? "badge-process"
+                                : "badge-desc";
+                        }
+                        <span class="badge badge-rounded @badgeClass mr-2">@faq.Category</span>
+                        @faq.Question
+                    </span>
+                    <span class="accordion__header--indicator"></span>
+                </div>
+
+                <div id="collapse@(i)"
+                    class="collapse accordion__body @(i == 0 ? "show" : "")"
+                    data-parent="#faqAccordion">
+                    <div class="accordion__body--text" style="white-space: pre-line;">
+                        @faq.Answer
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> 沒有符合的 FAQ 項目。
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            function doSearch() {
+                var keyword = $('#faqSearch').val();
+                var cat = $('#categoryFilter').val();
+                var url = '/Faq?keyword=' + encodeURIComponent(keyword);
+                if (cat) url += '&category=' + encodeURIComponent(cat);
+                window.location.href = url;
+            }
+
+            $('#searchBtn').click(doSearch);
+            $('#faqSearch').keypress(function (e) { if (e.which === 13) doSearch(); });
+            $('#categoryFilter').change(doSearch);
+        });
+    </script>
+}

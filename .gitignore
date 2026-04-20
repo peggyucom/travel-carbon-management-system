@@ -1,0 +1,28 @@
+# Visual Studio / .NET
+.vs/
+.dotnet/
+bin/
+obj/
+*.user
+*.suo
+
+# Local settings（避免把本機設定上傳）
+appsettings.Development.json
+
+# Logs
+**/Logs/
+
+# Database files（本機資料庫）
+*.db
+*.sqlite
+*.mdf
+*.ldf
+
+# Certificates / keys（敏感憑證）
+*.pfx
+*.pem
+*.key
+
+# Environment variables
+.env
+.env.*

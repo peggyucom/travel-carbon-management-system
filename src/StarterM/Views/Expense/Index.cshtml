@@ -1,0 +1,213 @@
+﻿@model List<StarterM.Models.DailyTrip>
+@{
+    ViewData["Title"] = "差旅申請";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        @* 按鈕跟搜尋框距離 *@
+        #reportButtonWrapper {
+            margin-left: 15px;
+        }
+
+        @* 搜尋框 label 的間距 *@
+        #tripTable_filter label {
+            margin-bottom: 0;
+        }
+
+        @* 修正 DataTables + Bootstrap 衝突 *@
+        .dataTables_wrapper .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+    </style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="icon icon-form text-primary fa-lg mr-2"></i>差旅申請</h1>       
+            <a asp-action="CreateTrip" class="btn btn-primary mt-3">
+                <i class="fas fa-plus"></i> 新增差旅日期
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (Model.Any())
+{
+    
+    <div class="table-responsive">
+        <form asp-controller="Application" asp-action="CreateFromTrips" method="post" id="createReportForm">
+            @Html.AntiForgeryToken()
+        </form>         
+        <div>
+            <table class="table primary-table-bordered table-hover" id="tripTable">
+               
+                <thead class="thead-primary">
+                    <tr>
+                        <th> <input type="checkbox" id="selectAllTrips" /></th>
+                        <th  class="text-left" data-sort="date">日期</th>
+                        <th  class="text-left" data-sort="reason">出差事由</th>
+                        <th  class="text-right">費用筆數</th>
+                        <th  class="text-right" data-sort="amount">合計金額</th>
+                        <th  class="text-center">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var trip in Model)
+                    {
+                        var totalAmount = trip.Expenses.Sum(e => e.Amount);
+                        <tr>
+                            <td>
+                                <input type="checkbox" name="selectedTripIds" value="@trip.Id" class="trip-checkbox" form="createReportForm" data-amount="@totalAmount" data-date="@trip.Date.ToString("yyyy/MM/dd")" />
+                            </td>
+                            <td class="text-left" data-value="@trip.Date.ToString("yyyy-MM-dd")">@trip.Date.ToString("yyyy/MM/dd")</td>
+                            <td class="text-left">@trip.TripReason</td>
+                            <td class="text-right">@trip.Expenses.Count 筆</td>
+                            <td class="text-right" data-value="@totalAmount">NT$ @totalAmount.ToString("N0")</td>
+                            <td class="text-center">
+                                <span>                              
+                                <a asp-action="TripDetails" asp-route-id="@trip.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="fa fa-pencil color-muted"></i> 
+                                </a>
+                                <form asp-action="DeleteTrip" asp-route-id="@trip.Id" method="post" class="d-inline confirmable-form" data-confirm="確定要刪除此日差旅及所有明細嗎？">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fa fa-close color-danger"></i>
+                                    </button>
+                                </form>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="font-weight-bold bg-light border-top">
+                        <td colspan="4" class="text-right">總金額：</td>
+                        <td class="text-right text-primary" id="selectedTotal">NT$ @Model.Sum(t => t.Expenses.Sum(e => e.Amount)).ToString("N0")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div id="reportButtonWrapper" class="d-none">
+                <button type="submit" class="btn btn-primary text-light" id="createReportBtn" form="createReportForm">
+                    <i class="fas fa-file-invoice-dollar mr-1"></i> 產生報支單
+                </button>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row justify-content-center mt-4">
+        <div class="col-md-8 col-lg-6">
+            <div class="alert alert-primary text-center mb-0">
+                <i class="fas fa-info-circle mr-2"></i>
+                目前沒有差旅紀錄，請點擊「新增差旅日期」開始。
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            var table = $('#tripTable').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[1, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                columnDefs: [
+                    { orderable: false, targets: [0, 3, 5] },
+                    { searchable: true, targets: [1, 2, 4] }
+                ],
+                dom: '<"row align-items-center mb-3"<"col-sm-6"l><"col-sm-6 d-flex justify-content-end align-items-center"f>>t<"row"<"col-sm-6"i><"col-sm-6"p>>',
+
+                initComplete: function () {
+                    var $filter = $('#tripTable_filter');
+
+                    $filter.addClass('d-flex align-items-center');
+                    $filter.find('label').addClass('mb-0 mr-2');
+                    
+                    $('#reportButtonWrapper')
+                        .removeClass('d-none')
+                        .appendTo($filter);
+                }
+            });
+
+            function bindCheckboxEvents() {
+                $('#selectAllTrips').off('change').on('change', function () {
+                    var checked = this.checked;
+                    $('#tripTable tbody input.trip-checkbox').each(function () { this.checked = checked; });
+                    updateSelectedTotal();
+                });
+
+                $('#tripTable tbody').off('change', 'input.trip-checkbox').on('change', 'input.trip-checkbox', updateSelectedTotal);
+            }
+
+            bindCheckboxEvents();
+            table.on('draw', function () { bindCheckboxEvents(); });
+
+            function getSelectedTripValidationMessage() {
+                const checkedTrips = Array.from(document.querySelectorAll('.trip-checkbox:checked'));
+                if (checkedTrips.length === 0) {
+                    return '請至少勾選一筆差旅';
+                }
+
+                const zeroAmountTrip = checkedTrips.find(cb => (parseInt(cb.dataset.amount, 10) || 0) === 0);
+                if (zeroAmountTrip) {
+                    return zeroAmountTrip.dataset.date + ' 的合計金額為 0，無法產生報支單';
+                }
+
+                const selectedTotal = checkedTrips.reduce((sum, cb) => sum + (parseInt(cb.dataset.amount, 10) || 0), 0);
+                if (selectedTotal === 0) {
+                    return '勾選差旅的總金額為 0，無法產生報支單';
+                }
+
+                return null;
+            }
+
+            function updateSelectedTotal() {
+                let total = 0;
+                document.querySelectorAll('.trip-checkbox:checked').forEach(cb => {
+                    const row = cb.closest('tr');
+                    const amountCell = row.querySelector('td[data-value]:last-of-type') || row.cells[4];
+                    total += parseInt(amountCell.getAttribute('data-value')) || 0;
+                });
+                const checked = document.querySelectorAll('.trip-checkbox:checked').length;
+                const all = document.querySelectorAll('.trip-checkbox').length;
+                if (checked === 0 || checked === all) {
+                    let allTotal = 0;
+                    document.querySelectorAll('#tripTable tbody tr').forEach(row => {
+                        allTotal += parseInt(row.cells[4].getAttribute('data-value')) || 0;
+                    });
+                    document.getElementById('selectedTotal').textContent = 'NT$ ' + allTotal.toLocaleString();
+                } else {
+                    document.getElementById('selectedTotal').textContent = 'NT$ ' + total.toLocaleString() + '（已選 ' + checked + ' 筆）';
+                }
+            }
+
+            document.getElementById('createReportForm')?.addEventListener('submit', function (e) {
+                const validationMessage = getSelectedTripValidationMessage();
+                if (validationMessage) {
+                    e.preventDefault();
+                    confirmModal.showAlert(validationMessage);
+                }
+            });
+
+            document.getElementById('createReportBtn')?.addEventListener('click', function (e) {
+                e.preventDefault();
+                const validationMessage = getSelectedTripValidationMessage();
+                if (validationMessage) {
+                    confirmModal.showAlert(validationMessage);
+                    return;
+                }
+                confirmModal.showConfirm('確定要將勾選的差旅產生報支單嗎？').then(ok => { if (ok) document.getElementById('createReportForm').submit(); });
+            });
+        });
+    </script>
+}

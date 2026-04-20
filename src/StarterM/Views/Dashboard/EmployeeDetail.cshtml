@@ -1,0 +1,396 @@
+@model StarterM.ViewModels.Dashboard.EmployeeTravelDetailPageViewModel
+
+@{
+    ViewData["Title"] = "員工差旅分析";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var sourceText = Model.IsCarbonFocus ? "員工碳排行" : "員工費用排行";
+    var summaryHint = Model.IsCarbonFocus
+        ? "此頁顯示該員工於指定區間的碳排、費用與交通紀錄，協助了解高碳排來源。"
+        : "此頁顯示該員工於指定區間的費用、碳排與交通紀錄，協助了解高費用來源。";
+
+    var detailHint = Model.IsCarbonFocus
+        ? "顯示該員工各筆差旅交通紀錄，並保留費用資訊供交叉比對。"
+        : "顯示該員工各筆差旅交通紀錄，並保留碳排資訊供交叉比對。";
+
+    var primaryCardClass = Model.IsCarbonFocus ? "summary-card-primary-carbon" : "summary-card-primary-cost";
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+                <h1 class="mb-0">
+                    <i class="text-primary fa-lg mr-2 fas fa-external-link-alt"></i>
+                    @Model.EmployeeName 差旅分析
+                </h1>
+                <a asp-action="Index" class="btn btn-outline-primary mt-2 mt-sm-0">
+                    <i class="fas fa-arrow-left"></i> 返回分析
+                </a>
+            </div>
+
+            <div class="d-flex align-items-center flex-wrap mt-3">
+                <span class="focus-badge @(Model.IsCarbonFocus ? "focus-badge-carbon" : "focus-badge-cost") mr-3">
+                    來源：@sourceText
+                </span>
+                <span class="text-muted">
+                    統計區間：@Model.StartDate.ToString("yyyy-MM-dd") ～ @Model.EndDate.ToString("yyyy-MM-dd")
+                </span>
+            </div>
+
+            <div class="alert alert-light border-left border-primary mt-3 mb-0 detail-summary-hint">
+                @summaryHint
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    @if (Model.IsCarbonFocus)
+    {
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card summary-card @primaryCardClass h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="summary-label">員工碳排放量</div>
+                    <div class="summary-value" id="summaryCarbon">0 kg CO₂</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card summary-card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="summary-label">員工交通費用</div>
+                    <div class="summary-value" id="summaryTransportationCost">NT$ 0</div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card summary-card @primaryCardClass h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="summary-label">員工交通費用</div>
+                    <div class="summary-value" id="summaryTransportationCost">NT$ 0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card summary-card h-100 shadow-sm border-0">
+                <div class="card-body">
+                    <div class="summary-label">員工碳排放量</div>
+                    <div class="summary-value" id="summaryCarbon">0 kg CO₂</div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card summary-card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="summary-label">出差天數</div>
+                <div class="summary-value" id="summaryTravelDays">0 天</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card summary-card h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="summary-label">碳費效率</div>
+                <div class="summary-value summary-value-sm" id="summaryCostPerCarbon">--</div>
+                <div class="summary-subtext">交通費用 ÷ 碳排量</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-danger d-none" id="detailError"></div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header border-bottom bg-cardhead d-flex justify-content-between align-items-center flex-wrap">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-list text-primary mr-2"></i>
+                <span class="font-weight-bold">差旅交通紀錄</span>
+            </h4>
+        </div>
+        <span class="small text-muted mt-2 mt-sm-0" id="detailSortHint">@detailHint</span>
+    </div>
+
+    <div class="card-body">
+        <div id="detailEmptyState" class="empty-state d-none">此員工在目前期間沒有交通紀錄。</div>
+
+        <div id="detailTableWrapper">
+            <div class="table-responsive">
+                <table class="table primary-table-bordered table-hover text-center" id="detailTable">
+                    <thead class="thead-primary">
+                        <tr>
+                            <th>日期</th>
+                            <th>交通工具</th>
+                            @if (Model.IsCarbonFocus)
+                            {
+                                <th class="text-success font-weight-bold">碳排量</th>
+                                <th>距離</th>
+                                <th>費用</th>
+                            }
+                            else
+                            {
+                                <th class="text-primary font-weight-bold">費用</th>
+                                <th>距離</th>
+                                <th>碳排量</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody id="detailTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .summary-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-radius: 0.85rem;
+        }
+
+        .summary-card-primary-cost {
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+            border-left: 4px solid #2563eb !important;
+        }
+
+        .summary-card-primary-carbon {
+            background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+            border-left: 4px solid #16a34a !important;
+        }
+
+        .summary-label {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-value {
+            color: #1f2d3d;
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        .summary-value-sm {
+            font-size: 1.6rem;
+        }
+
+        .summary-subtext {
+            color: #6c757d;
+            font-size: 0.85rem;
+            margin-top: 0.35rem;
+        }
+
+        .focus-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .focus-badge-cost {
+            background: rgba(37, 99, 235, 0.12);
+            color: #1d4ed8;
+        }
+
+        .focus-badge-carbon {
+            background: rgba(22, 163, 74, 0.12);
+            color: #15803d;
+        }
+
+        .detail-summary-hint {
+            border-radius: 0.6rem;
+        }
+
+        .empty-state {
+            color: #6c757d;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1rem;
+            border: 1px dashed #dee2e6;
+            border-radius: 0.5rem;
+            background: #fff;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: 1px solid gray;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        const pageState = {
+            employeeId: '@Model.EmployeeId',
+            view: '@Model.View',
+            startDate: '@Model.StartDate.ToString("yyyy-MM-dd")',
+            endDate: '@Model.EndDate.ToString("yyyy-MM-dd")'
+        };
+
+        function formatDateForDisplay(value) {
+            return new Intl.DateTimeFormat('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            }).format(new Date(value));
+        }
+
+        function formatCurrency(value) {
+            return `NT$ ${Number(value || 0).toLocaleString('zh-TW', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            })}`;
+        }
+
+        function formatCarbon(value) {
+            return `${Number(value || 0).toLocaleString('zh-TW', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            })} kg CO₂`;
+        }
+
+        function renderSummary(summary) {
+            const transportationCost = Number(summary.transportationCost || 0);
+            const totalCarbon = Number(summary.totalCarbon || 0);
+            const travelDays = Number(summary.travelDays || 0);
+            const costPerCarbon = totalCarbon > 0
+                ? `NT$ ${(transportationCost / totalCarbon).toLocaleString('zh-TW', {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1
+                })} / kg`
+                : '--';
+
+            $('#summaryTransportationCost').text(formatCurrency(transportationCost));
+            $('#summaryCarbon').text(formatCarbon(totalCarbon));
+            $('#summaryTravelDays').text(`${travelDays.toLocaleString('zh-TW')} 天`);
+            $('#summaryCostPerCarbon').text(costPerCarbon);
+        }
+
+        function initDetailTable() {
+            if ($.fn.DataTable.isDataTable('#detailTable')) {
+                $('#detailTable').DataTable().destroy();
+            }
+
+            $('#detailTable').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[0, 'desc']],
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: false,
+                scrollX: false,
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                dom: '<"row mb-3"<"col-sm-6"l><"col-sm-6"f>>t<"row mt-3"<"col-sm-6"i><"col-sm-6"p>>',
+                columnDefs: [
+                    { className: 'text-center', targets: '_all' }
+                ],
+                initComplete: function () {
+                    this.api().columns.adjust();
+                }
+            });
+        }
+
+        function renderDetails(items) {
+            const isCarbonFocus = pageState.view === 'carbon';
+
+            if ($.fn.DataTable.isDataTable('#detailTable')) {
+                $('#detailTable').DataTable().destroy();
+            }
+
+            if (!items.length) {
+                $('#detailTableBody').empty();
+                $('#detailTableWrapper').addClass('d-none');
+                $('#detailEmptyState').removeClass('d-none').text(
+                    isCarbonFocus
+                        ? '此員工在目前期間沒有可供碳排分析的交通紀錄。'
+                        : '此員工在目前期間沒有可供費用分析的交通紀錄。'
+                );
+                return;
+            }
+
+            const sortedItems = [...items].sort((left, right) => new Date(right.date) - new Date(left.date));
+
+            const rows = sortedItems.map(item => {
+                const distanceText = item.distanceKm == null
+                    ? '-'
+                    : `${Number(item.distanceKm).toLocaleString('zh-TW', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2
+                    })} km`;
+
+                const metricsHtml = isCarbonFocus
+                    ? `
+                        <td>${formatCarbon(item.carbon)}</td>
+                        <td>${distanceText}</td>
+                        <td>${formatCurrency(item.amount)}</td>`
+                    : `
+                        <td>${formatCurrency(item.amount)}</td>
+                        <td>${distanceText}</td>
+                        <td>${formatCarbon(item.carbon)}</td>`;
+
+                return `
+                    <tr>
+                        <td>${formatDateForDisplay(item.date)}</td>
+                        <td>${item.transportType ?? '-'}</td>
+                        ${metricsHtml}
+                    </tr>`;
+            });
+
+            $('#detailTableBody').html(rows.join(''));
+            $('#detailEmptyState').addClass('d-none');
+            $('#detailTableWrapper').removeClass('d-none');
+
+            initDetailTable();
+        }
+
+        async function loadEmployeeDetails() {
+            $('#detailError').addClass('d-none').text('');
+
+            try {
+                const response = await $.get('/api/dashboard/employee-detail', {
+                    employeeId: pageState.employeeId,
+                    startDate: pageState.startDate,
+                    endDate: pageState.endDate
+                });
+
+                if (!response.success) {
+                    throw new Error(response.error?.message || '資料讀取失敗');
+                }
+
+                const data = response.data || {};
+                renderSummary(data.summary || {});
+                renderDetails(data.items || []);
+            } catch (error) {
+                if ($.fn.DataTable.isDataTable('#detailTable')) {
+                    $('#detailTable').DataTable().destroy();
+                }
+
+                $('#detailError').removeClass('d-none').text(error.message || '明細資料載入失敗');
+                $('#detailTableBody').empty();
+                $('#detailTableWrapper').addClass('d-none');
+                $('#detailEmptyState').removeClass('d-none').text('目前無法載入員工差旅明細。');
+            }
+        }
+
+        $(function () {
+            loadEmployeeDetails();
+        });
+    </script>
+}

@@ -1,0 +1,609 @@
+@{
+    ViewData["Title"] = "首頁";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    var rejectedApplications = ViewData["RejectedApplications"] as List<StarterM.Models.Application>;
+    var pendingCount = ViewData["PendingReviewCount"] as int? ?? 0;
+
+    var employeeApplicationCount = ViewData["EmployeeApplicationCount"] as int? ?? 0;
+    var employeePendingCount = ViewData["EmployeePendingCount"] as int? ?? 0;
+    var employeeApprovedCount = ViewData["EmployeeApprovedCount"] as int? ?? 0;
+
+    var todayText = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+@section Styles {
+    <style>
+        @* manager *@
+        .manager-kpi-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        .manager-kpi-label {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .manager-kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .manager-kpi-hint {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .manager-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #eef2f7;
+        }
+
+        .manager-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important;
+        }
+
+        .manager-card a {
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .manager-card .card-text {
+            color: #6c757d;
+        }
+
+        .manager-card-primary {
+            border: 1px solid rgba(220, 38, 38, 0.18);
+        }
+        .manager-card-icon {
+            font-size: 3rem !important;
+        }
+
+                .employee-kpi-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        }
+
+        @* employee *@
+        .employee-kpi-label {
+            color: #6c757d;
+            font-size: 0.95rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .employee-kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+        }
+
+        .employee-kpi-hint {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .employee-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: 1px solid #eef2f7;
+        }
+
+        .employee-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 .5rem 1rem rgba(0,0,0,.08) !important;
+        }
+
+        .employee-card a {
+            color: inherit;
+            display: block;
+            height: 100%;
+        }
+
+        .employee-card .card-text {
+            color: #6c757d;
+        }
+
+        .employee-card-primary {
+            border: 1px solid rgba(37, 99, 235, 0.18);
+        }
+
+        .employee-card-light {
+            opacity: 0.96;
+        }
+
+        .employee-icon {
+            font-size: 2.8rem !important;
+            line-height: 1;
+            display: inline-block;
+        }
+        
+        @* reject *@
+        .reject-alert-card {
+            background: #fff7f7;
+            border: 1px solid #f5c2c7;
+            border-left: 5px solid #dc3545;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.35rem rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .reject-alert-header {
+            padding: 1rem 1.25rem 0.75rem 1.25rem;
+            border-bottom: 1px solid rgba(220, 53, 69, 0.08);
+            background: rgba(220, 53, 69, 0.03);
+        }
+
+        .reject-alert-icon {
+            width: 42px;
+            height: 42px;
+            min-width: 42px;
+            border-radius: 50%;
+            background: rgba(220, 53, 69, 0.12);
+            color: #dc3545;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.9rem;
+            font-size: 1.1rem;
+        }
+
+        .reject-alert-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #842029;
+        }
+
+        .reject-alert-subtitle {
+            font-size: 0.9rem;
+            color: #a94442;
+            margin-top: 0.15rem;
+        }
+
+        .reject-alert-body {
+            padding: 1rem 1.25rem 1.25rem 1.25rem;
+        }
+
+        .reject-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            background: #ffffff;
+            border: 1px solid #f1d6d9;
+            border-radius: 0.65rem;
+            padding: 0.9rem 1rem;
+        }
+
+        .reject-item + .reject-item {
+            margin-top: 0.85rem;
+        }
+
+        .reject-item-main {
+            flex: 1;
+        }
+
+        .reject-item-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+
+        .reject-label {
+            display: inline-block;
+            min-width: 68px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .reject-value {
+            color: #343a40;
+        }
+
+        .reject-reason {
+            color: #842029;
+            background: rgba(220, 53, 69, 0.06);
+            padding: 0.3rem 0.55rem;
+            border-radius: 0.4rem;
+            display: inline-block;
+        }
+
+        .reject-item-action {
+            flex-shrink: 0;
+        }
+
+        @@media (max-width: 767.98px) {
+            .reject-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .reject-item-action {
+                width: 100%;
+            }
+
+            .reject-item-action .btn {
+                width: 100%;
+            }
+        }
+    </style>
+}
+
+
+@if (User.Identity != null && User.Identity.IsAuthenticated)
+{
+    @if (User.IsInRole("Employee"))
+    {
+        <div class="row page-titles mx-0">
+            <div class="col-12 p-md-0">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body py-4 px-4">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+                            <div>
+                                <h1 class="mb-2">
+                                    <i class="fas fa-suitcase-rolling text-primary fa-lg mr-2"></i>
+                                    差旅與碳排管理系統
+                                </h1>
+                                <h4 class="mb-2 text-primary font-weight-bold">
+                                    👋 歡迎回來！今天是 @todayText
+                                </h4>
+                                <p class="mb-0 text-muted">
+                                    快速建立差旅申請，或查看目前申請進度與審核狀態。
+                                </p>
+                            </div>
+
+                            <div class="mt-3 mt-lg-0">
+                                <a asp-controller="Expense" asp-action="Index" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-plus mr-1"></i> 新增差旅
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 駁回提醒 *@
+        @if (rejectedApplications != null && rejectedApplications.Any())
+        {
+            <div class="reject-alert-card mt-4 mb-4">
+                <div class="reject-alert-header">
+                    <div class="d-flex align-items-center">
+                        <div class="reject-alert-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <div class="reject-alert-title">您有被駁回的申請單</div>
+                            <div class="reject-alert-subtitle">請依照駁回原因修改後重新送出申請。</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reject-alert-body">
+                    @foreach (var r in rejectedApplications)
+                    {
+                        var lastReject = r.ApprovalHistories?
+                            .Where(h => h.Action == StarterM.Models.Enums.ApprovalAction.Reject)
+                            .OrderByDescending(h => h.CreatedAt)
+                            .FirstOrDefault();
+
+                        var dates = r.DailyTrips.Select(d => d.Date).OrderBy(d => d).ToList();
+                        var dateRange = dates.Any()
+                            ? $"{dates.First():yyyy/MM/dd} ~ {dates.Last():yyyy/MM/dd}"
+                            : "-";
+
+                        <div class="reject-item">
+                            <div class="reject-item-main">
+                                <div class="reject-item-row">
+                                    <span class="reject-label">出差日</span>
+                                    <span class="reject-value font-weight-bold">@dateRange</span>
+                                    <span class="badge badge-warning ml-2">駁回</span>
+                                </div>
+
+                                @if (lastReject != null)
+                                {
+                                    <div class="reject-item-row mt-2">
+                                        <span class="reject-label">駁回原因</span>
+                                        <span class="reject-reason">@lastReject.Comment</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="reject-item-action">
+                                <a asp-controller="Application"
+                                asp-action="Details"
+                                asp-route-id="@r.Id"
+                                class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-edit mr-1"></i> 前往修改
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        @* KPI 區 *@
+        <div class="row mb-2 mt-4">
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 employee-kpi-card">
+                    <div class="card-body">
+                        <div class="employee-kpi-label">本月申請</div>
+                        <div class="employee-kpi-value text-primary">@employeeApplicationCount 筆</div>
+                        <div class="employee-kpi-hint">統計本月出差日期的差旅申請筆數</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 employee-kpi-card">
+                    <div class="card-body">
+                        <div class="employee-kpi-label">待審核</div>
+                        <div class="employee-kpi-value text-warning">@employeePendingCount 筆</div>
+                        <div class="employee-kpi-hint">統計目前全部尚待主管審核的申請單</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-3">
+                <div class="card shadow-sm h-100 border-0 employee-kpi-card">
+                    <div class="card-body">
+                        <div class="employee-kpi-label">本月已核准</div>
+                        <div class="employee-kpi-value text-success">@employeeApprovedCount 筆</div>
+                        <div class="employee-kpi-hint">統計本月已完成核准的申請單</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* 主要功能 *@
+        <div class="mb-3 mt-2">
+            <h4 class="font-weight-bold text-dark">
+                <i class="fas fa-star text-warning mr-2"></i>主要功能
+            </h4>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 employee-card employee-card-primary">
+                    <a asp-controller="Expense" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-form text-primary mb-3 employee-icon"></i>
+                            <h5 class="card-title mb-2">差旅申請</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">建立並管理您的差旅費用申請</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 employee-card">
+                    <a asp-controller="Application" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-time text-success mb-3 employee-icon"></i>
+                            <h5 class="card-title mb-2">申請紀錄</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">查看差旅申請單與審核狀態</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 employee-card employee-card-light">
+                    <a asp-controller="Faq" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-book-open-2 text-secondary mb-3 employee-icon"></i>
+                            <h5 class="card-title mb-2">常見問題</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">查看差旅申請與系統使用說明</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    @if (User.IsInRole("Manager"))
+    {
+        <div class="row page-titles mx-0">
+            <div class="col-12 p-md-0">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body py-4 px-4">
+                        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center">
+                            <div>
+                                <h1 class="mb-2">
+                                    <i class="fas fa-suitcase-rolling text-primary fa-lg mr-2"></i>
+                                    差旅與碳排管理系統
+                                </h1>
+                                <h4 class="mb-2 text-primary font-weight-bold">
+                                    👋 歡迎回來！今天是 @todayText
+                                </h4>
+                                <p class="mb-0 text-muted">
+                                    目前有
+                                    <span class="font-weight-bold text-danger">@pendingCount</span>
+                                    筆待審核差旅申請，建議優先處理。
+                                </p>
+                            </div>
+
+                            <div class="mt-3 mt-lg-0">
+                                <a asp-controller="Application" asp-action="Index" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-clipboard-check mr-1"></i> 前往審核
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI 區 -->
+        <div class="row mb-2">
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 manager-kpi-card">
+                    <div class="card-body">
+                        <div class="manager-kpi-label">待審核申請</div>
+                        <div class="manager-kpi-value text-danger">@pendingCount 筆</div>
+                        <div class="manager-kpi-hint">請優先確認尚未審核的差旅申請單</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-6 mb-3">
+                <div class="card shadow-sm h-100 border-0 manager-kpi-card">
+                    <div class="card-body">
+                        <div class="manager-kpi-label">主要任務</div>
+                        <div class="manager-kpi-value text-primary">差旅審核</div>
+                        <div class="manager-kpi-hint">檢查費用合理性與交通明細資料</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4 col-md-12 mb-3">
+                <div class="card shadow-sm h-100 border-0 manager-kpi-card">
+                    <div class="card-body">
+                        <div class="manager-kpi-label">分析入口</div>
+                        <div class="manager-kpi-value text-success">費用 / 碳排</div>
+                        <div class="manager-kpi-hint">快速查看差旅費用與碳排統計分析</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要功能 -->
+        <div class="mb-3 mt-2">
+            <h4 class="font-weight-bold text-dark">
+                <i class="fas fa-star text-warning mr-2"></i>主要功能
+            </h4>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card manager-card-primary">
+                    <a asp-controller="Application" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-check-2 text-primary mb-3 manager-card-icon"></i>
+                            <h5 class="card-title mb-2">
+                                差旅審核
+                                @if (pendingCount > 0)
+                                {
+                                    <span class="badge badge-danger ml-2 px-2 py-1">@pendingCount</span>
+                                }
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">審核員工差旅申請並查看費用明細</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="Dashboard" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-chart-pie-36 text-danger mb-3 manager-card-icon"></i>
+                            <h5 class="card-title mb-2">費用與碳排分析</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">查看差旅費用、交通成本與碳排放統計分析</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-4 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="ApprovalHistory" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-time text-secondary mb-3 manager-card-icon"></i>
+                            <h5 class="card-title mb-2">審核紀錄</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">查詢歷史審核結果與申請處理紀錄</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 管理設定 -->
+        <div class="mb-3 mt-2">
+            <h4 class="font-weight-bold text-dark">
+                <i class="fas fa-cogs text-info mr-2"></i>管理設定
+            </h4>
+        </div>
+
+        <div class="row">
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="Admin" asp-action="Index" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-users-mm text-info mb-3 manager-card-icon"></i>
+                            <h5 class="card-title">員工管理</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">建立與停用員工帳號</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="Admin" asp-action="Rates" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-wallet-90 text-warning mb-3 manager-card-icon"></i>
+                            <h5 class="card-title">費率管理</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">設定膳雜費與自用車補助費率</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="Admin" asp-action="EmissionFactors" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-layers-3 text-success mb-3 manager-card-icon"></i>
+                            <h5 class="card-title">碳排係數</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">管理各交通工具的碳排放係數</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="card text-center shadow-sm h-100 manager-card">
+                    <a asp-controller="Faq" asp-action="Manage" class="text-decoration-none">
+                        <div class="card-header d-flex flex-column align-items-center justify-content-center bg-white border-0 pt-4">
+                            <i class="icon icon-book-open-2 text-secondary mb-3 manager-card-icon"></i>
+                            <h5 class="card-title">FAQ 維護</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">管理系統常見問題與說明內容</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+
+
+
+
+

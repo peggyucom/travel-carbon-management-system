@@ -1,0 +1,211 @@
+@model List<StarterM.Models.Faq>
+@{
+    ViewData["Title"] = "FAQ 管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var category = ViewData["Category"] as string;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+    <style>
+        .badge-process {
+            color: #6f42c1;
+            border: 1px solid #6f42c1;
+            background-color: transparent;
+        }
+
+        .badge-desc {
+            color: #6c757d;
+            border: 1px solid #6c757d;
+            background-color: transparent;
+        }
+
+        /* 最後一列底線 */
+        .table tbody tr:last-child td {
+            border-bottom: 1px solid gray;
+        }  
+    </style>
+}
+
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="icon icon-book-open-2 text-primary fa-lg mr-2"></i>FAQ 維護</h1>      
+        </div>
+    </div>
+</div>
+
+
+<!-- 新增 FAQ -->
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header border-bottom bg-cardhead">
+                <div class="d-flex align-items-center">
+                    <h4 class="mb-0">
+                        <i class="fas fa-plus text-primary mr-2"></i>
+                        <span class="font-weight-bold">新增 FAQ</span>
+                    </h4>
+                </div>
+            </div>        
+            <div class="card-body">
+                <div class="basic-form">
+                    <form asp-action="CreateFaq" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label>問題分類</label>
+                            <select name="Category" class="form-control" required>
+                                <option value="報支流程">報支流程</option>
+                                <option value="費用說明">費用說明</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>問題</label>
+                            <input name="Question" class="form-control" required />
+                        </div>
+                        <div class="form-group">
+                            <label>回答</label>
+                            <textarea name="Answer" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block mt-3">
+                            <i class="fas fa-save mr-1"></i> 新增FAQ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- FAQ 列表 -->
+
+<div class="card mt-3">
+    <div class="card-header border-bottom bg-cardhead">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-list text-primary mr-2"></i>
+                <span class="font-weight-bold">FAQ 列表</span>
+            </h4>
+        </div>
+    </div>     
+    <div class="card-body">       
+        <table class="table primary-table-bordered table-hover" id="faqTable">
+            <thead class="thead-primary">
+                <tr>
+                    <th class="text-center">分類</th>
+                    <th class="text-left">問題</th>
+                    <th class="text-left">回答</th>
+                    <th class="text-center">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var faq in Model)
+                {
+                    <tr>
+                        <td class="text-center">                            
+                            @{
+                                var badgeClass = faq.Category == "報支流程"
+                                    ? "badge-process"
+                                    : "badge-desc";
+                            }
+                            <span class="badge badge-rounded @badgeClass mr-2">@faq.Category</span>                                  
+                        </td>                        
+                        <td class="text-left">@faq.Question</td>
+                        <td class="text-left">@faq.Answer</td>
+                        <td class="text-center" style="white-space:nowrap;">
+                            <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
+                                    data-id="@faq.Id" data-question="@faq.Question"
+                                    data-answer="@faq.Answer" data-category="@faq.Category">
+                                <i class="fa fa-pencil color-muted"></i>
+                            </button>
+                            <form asp-action="DeleteFaq" asp-route-id="@faq.Id" method="post" class="d-inline confirmable-form" data-confirm="確定刪除嗎？">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="fa fa-close color-danger"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        
+    </div>
+</div>
+
+<!-- 編輯 Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form asp-action="EditFaq" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="editId" />
+                <input type="hidden" name="IsActive" value="true" />
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa fa-pencil color-muted"></i> 編輯 FAQ</h5>
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>問題分類</label>
+                        <select name="Category" id="editCategory" class="form-control" required>
+                            <option value="報支流程">報支流程</option>
+                            <option value="費用說明">費用說明</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>問題</label>
+                        <input name="Question" id="editQuestion" class="form-control" required />
+                    </div>
+                    <div class="form-group">
+                        <label>回答</label>
+                        <textarea name="Answer" id="editAnswer" class="form-control" rows="3" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-dismiss="modal"><i class="fas fa-arrow-left mr-1"></i>返回</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> 儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+    $(function () {
+            // 編輯 Modal
+            $('.edit-btn').click(function () {
+                $('#editId').val($(this).data('id'));
+                $('#editQuestion').val($(this).data('question'));
+                $('#editAnswer').val($(this).data('answer'));
+                $('#editCategory').val($(this).data('category'));
+                $('#editModal').modal('show');
+            });
+
+            //datatable
+            var tables = {};
+
+            function initTable(id, orderCol) {
+                var dt = $('#' + id).DataTable({
+                    pageLength: 5,
+                    lengthMenu: [5, 10, 25],
+                    order: [[orderCol ?? 0, 'desc']],
+                    language: {
+                        url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                    },
+                    columnDefs: [
+                        { orderable: false, targets: -1 }
+                    ],
+                    dom: '<"row"<"col-sm-6"l><"col-sm-6"f>>t<"row"<"col-sm-6"i><"col-sm-6"p>>'
+                });
+                tables[id] = dt;
+            }
+
+            if ($('#faqTable').length) initTable('faqTable', 0);                
+            
+    });   
+    </script>
+}

@@ -1,0 +1,76 @@
+@model List<StarterM.ViewModels.EmissionFactorListItemViewModel>
+@{
+    ViewData["Title"] = "碳排係數管理";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        /* 最後一列底線 */
+        .table tbody tr:last-child td {
+            border-bottom: 1px solid gray;
+        } 
+         /* thead垂直置中 */    
+        th {
+            vertical-align: middle !important;
+        }
+    </style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="icon icon-layers-3 text-primary fa-lg mr-2"></i> 碳排係數管理</h1>             
+        </div>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table primary-table-bordered table-hover"">
+        <thead class="thead-primary">
+            <tr>
+                <th class="text-center">交通工具</th>
+                <th class="text-center">碳排係數<br>
+                    <small>(kgCO₂/km)</small>
+                </th>
+                <th class="text-center">資料來源</th>
+                <th class="text-center">生效日期</th>
+                <th class="text-center">最後更新</th>
+                <th class="text-center">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.VehicleTypeName</td>
+                    <td class="text-center">@(item.Co2PerKm.HasValue ? item.Co2PerKm.Value.ToString("N4") : "-")</td>
+                    <td class="text-center">@(string.IsNullOrWhiteSpace(item.Source) ? "-" : item.Source)</td>
+                    <td class="text-center">@(item.EffectiveFrom.HasValue ? item.EffectiveFrom.Value.ToString("yyyy-MM-dd") : "")</td>
+                    <td class="text-center">
+                        @if (item.UpdatedAt.HasValue)
+                        {
+                            <span>@item.UpdatedAt.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</span>
+                            @if (!string.IsNullOrWhiteSpace(item.UpdatedByName))
+                            {
+                                <small class="text-muted d-block">@item.UpdatedByName</small>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                    <td class="text-center">
+                        <a asp-action="CreateEmissionFactor" asp-route-vehicleTypeId="@item.VehicleTypeId" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> 
+                        </a>
+                        <a asp-action="EmissionFactorHistory" asp-route-vehicleTypeId="@item.VehicleTypeId" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

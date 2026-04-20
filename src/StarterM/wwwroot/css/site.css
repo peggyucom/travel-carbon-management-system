@@ -1,0 +1,225 @@
+﻿/*套件有內建好兩個class可以套用自己改樣式*/
+.field-validation-error {
+    /*color: #b94a48;*/
+    color: #dc3545;
+    font-size: 14px;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+
+input.input-validation-error {
+    /*border: 1px solid #b94a48;*/
+    border-color: #dc3545;
+}
+
+input[type="checkbox"].input-validation-error {
+    border: 0 none ;
+}
+
+.validation-summary-errors {
+    /*color: #b94a48;*/
+    color: #dc3545;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+
+/* ===== 表格排序 ===== */
+/* 在頁長選單右側顯示向下箭頭，提示為可選擇控制 */
+.dataTables_length {
+    position: relative;
+    display: inline-block;
+}
+
+    .dataTables_length select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        padding-right: 1.8rem;
+        background-color: #fff;
+        background-image: linear-gradient(45deg, transparent 50%, #495057 50%), linear-gradient(135deg, #495057 50%, transparent 50%);
+        background-position: calc(100% - 12px) 50%, calc(100% - 7px) 50%;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+    }
+
+
+/* ===== 表格整體 ===== */
+/* 主要內容文字 */
+.table tbody td {
+    color: #343a40; 
+}
+
+/* 表格不要滿版 */
+.table-responsive { 
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+
+/* 修改特定 table-hover 的懸停顏色 */
+
+.table tbody tr:hover {
+    background-color: #f3efff !important;
+}
+
+
+/* 數字統一靠右後，加一點間距  */
+td.text-right {
+    padding-right: 1.25rem;
+}
+
+
+/*  表頭（thead） */
+.table thead th {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+
+/* ===== 表尾（tfoot） ===== */
+.table tfoot td {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.table.dataTable tfoot td {
+    border-top: 1px solid gray;
+}
+
+
+/* ===== 表尾標籤（總金額：） ===== */
+.table tfoot td.label {
+    color: #495057; /* 次要文字 */
+    font-weight: 500;
+}
+
+
+/* ===== 金額（重點） ===== */
+#selectedTotal {
+    color: #5a3ec8;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+
+/* ===== 金額欄位（tbody） ===== */
+td.amount {
+    color: #212529;
+    font-weight: 600;
+}
+
+
+/* TempData */
+.custom-alert {
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border: none;
+    font-weight: 500;
+}
+
+.alert-success.custom-alert {
+    background-color: #f0fdf4;
+    color: #166534;
+}
+
+.alert-danger.custom-alert {
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+
+/* 共用提示視窗 */
+.custom-modal {
+    max-width: 420px;  /* 推薦 400~500 */
+}
+
+#globalConfirmModal .modal-content {
+    border: 0;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
+}
+
+#globalConfirmModal .modal-header {
+    border-bottom: 1px solid #f1f3f5;
+    padding: 1rem 1.25rem;
+    background: #fff;
+}
+
+#globalConfirmModal .modal-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2f3e4d;
+}
+
+#globalConfirmModal .modal-body {
+    padding: 1.5rem 1.25rem;
+    font-size: 1rem;
+    color: #495057;
+    line-height: 1.7;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#globalConfirmModal .modal-body::before {
+    content: "\f05a";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 1.4rem;
+    color: #6f42c1;
+    flex-shrink: 0;
+}
+
+#globalConfirmModal .modal-footer {
+    border-top: 1px solid #f1f3f5;
+    padding: 0.9rem 1.25rem 1.2rem;
+    gap: 8px;
+}
+
+#globalConfirmModal .btn {
+    min-width: 88px;
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+#globalConfirmModal .btn-primary {
+    background-color: #6f42c1;
+    border-color: #6f42c1;
+}
+
+#globalConfirmModal .btn-primary:hover {
+    background-color: #5a32a3;
+    border-color: #5a32a3;
+}
+
+#globalConfirmModal .btn-secondary {
+    background-color: #f1f3f5;
+    border-color: #f1f3f5;
+    color: #495057;
+}
+
+#globalConfirmModal .btn-secondary:hover {
+    background-color: #e9ecef;
+    border-color: #e9ecef;
+    color: #343a40;
+}
+
+#globalConfirmModal .close {
+    outline: none;
+    opacity: 0.6;
+}
+
+#globalConfirmModal .close:hover {
+    opacity: 1;
+}

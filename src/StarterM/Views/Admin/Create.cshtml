@@ -1,0 +1,68 @@
+@model StarterM.ViewModels.EmployeeCreateViewModel
+@{
+    ViewData["Title"] = "新增員工";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+<style>
+    /* ===== 表單寬度 ===== */
+    .basic-form {
+        max-width: 800px;   
+        margin: 0 auto;
+    }
+</style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="text-primary fa-lg mr-2 icon icon-single-04"></i>新增員工</h1>      
+        </div>
+    </div>
+</div>
+
+<div class="card">            
+    <div class="card-body">
+        <div class="basic-form">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger"></div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" asp-for="Name">姓名</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input asp-for="Name" class="form-control form-control-lg" placeholder="請輸入員工姓名" />
+                        <span asp-validation-for="Name" class="text-danger ml-1">*</span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" asp-for="Email">登入 Email</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input asp-for="Email" class="form-control form-control-lg" type="email" placeholder="Name@travel.com" />
+                        <span asp-validation-for="Email" class="text-danger ml-1">*</span>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label col-form-label-lg" asp-for="Password">初始密碼</label>
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <input asp-for="Password" class="form-control form-control-lg" type="password" placeholder="至少 6 個字元(含數字、英文大寫及小寫)" />                    
+                        <span asp-validation-for="Password" class="text-danger ml-1">*</span>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <div class="col-sm-10 d-flex align-items-center">
+                        <button type="submit" class="btn btn-primary mr-2"><i class="fas fa-save mr-1"></i> 建立帳號</button>
+                        <a asp-action="Index" class="btn btn-primary">
+                            <i class="fas fa-arrow-left mr-1"></i> 返回
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+

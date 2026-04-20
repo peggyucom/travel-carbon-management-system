@@ -1,0 +1,93 @@
+@model List<StarterM.Models.EmissionFactor>
+@{
+    ViewData["Title"] = "碳排係數歷史紀錄";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var vehicleType = ViewData["VehicleType"]?.ToString() ?? "";
+}
+
+@section Styles {
+    <style>
+        /* 最後一列底線 */
+        .table tbody tr:last-child td {
+            border-bottom: 1px solid gray;
+        }
+
+        /* thead垂直置中 */    
+        th {
+            vertical-align: middle !important;
+        }      
+    </style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="mb-0">
+                    <i class="text-primary fa-lg mr-2 icon icon-time"></i>碳排係數紀錄-@vehicleType
+                </h1>              
+                <a asp-action="EmissionFactors" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> 返回列表
+                </a>
+            </div>    
+        </div>
+    </div>
+</div>
+
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">目前無歷史紀錄。</div>
+}
+else
+{
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="historyTable" class="table primary-table-bordered table-hover">
+                    <thead class="thead-primary">
+                        <tr>                            
+                            <th class="text-center">碳排係數<br>
+                                <small>(kgCO₂/km)</small>
+                            </th>
+                            <th class="text-center">生效日期</th>
+                            <th class="text-center">資料來源</th>
+                            <th class="text-center">更新時間</th>
+                            <th class="text-center">更新者</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in Model)
+                        {
+                            <tr>                                
+                                <td class="text-center" data-order="@h.Co2PerKm">@h.Co2PerKm.ToString("N4")</td>
+                                <td class="text-center" data-order="@h.EffectiveFrom.ToString("yyyyMMdd")">@h.EffectiveFrom.ToString("yyyy/MM/dd")</td>
+                                <td class="text-center">@(h.Source ?? "-")</td>
+                                <td class="text-center" data-order="@(h.UpdatedAt?.ToString("yyyyMMddHHmmss") ?? string.Empty)">@(h.UpdatedAt.HasValue ? h.UpdatedAt.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm") : "-")</td>
+                                <td class="text-center">@(h.UpdatedBy?.Name ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(function () {
+            $('#historyTable').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[3, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                columnDefs: [
+                    { searchable: true, targets: '_all' }
+                ]
+            });
+        });
+    </script>
+}

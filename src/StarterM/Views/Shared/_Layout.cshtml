@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <title>@ViewData["Title"] - 差旅與碳排管理系統</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+    <link rel="icon" type="image/png" href="/images/logo2.png" />
+    <link href="~/css/style.css" rel="stylesheet"/>
+    <link href="~/css/site.css" rel="stylesheet" />
+    @RenderSection("Styles", required: false)
+</head>
+<body>
+    <!--*******************
+         Preloader start
+     ********************-->
+    <div id="preloader">
+        <div class="sk-three-bounce">
+            <div class="sk-child sk-bounce1"></div>
+            <div class="sk-child sk-bounce2"></div>
+            <div class="sk-child sk-bounce3"></div>
+        </div>
+    </div>
+    <!--*******************
+        Preloader end
+    ********************-->
+    <!--**********************************
+        Main wrapper start
+    ***********************************-->
+    <div id="main-wrapper">
+
+        <!--**********************************
+            Nav header start
+        ***********************************-->
+        <div class="nav-header">
+            <a asp-controller="Home" asp-action="Index" class="brand-logo">
+                <img class="logo-abbr" src="~/images/logo.png" alt="">
+                <img class="logo-compact" src="~/images/logo-text.png" alt="">
+                <img class="brand-title" src="~/images/logo-text.png" alt="">
+            </a>
+
+            <div class="nav-control">
+                <div class="hamburger">
+                    <span class="line"></span><span class="line"></span><span class="line"></span>
+                </div>
+            </div>
+        </div>
+        <!--**********************************
+            Nav header end
+        ***********************************-->
+        <!--**********************************
+            Header start
+        ***********************************-->
+        <div class="header">
+            <div class="header-content">
+                <nav class="navbar navbar-expand">
+                    <div class="collapse navbar-collapse justify-content-between">
+                        <div class="header-left">
+                            <div class="search_bar dropdown">
+                                <div class="dropdown-menu p-0 m-0">
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="navbar-nav header-right">
+                            <li class="nav-item dropdown notification_dropdown">
+                                <div class="dropdown-menu dropdown-menu-right">
+                                    <ul class="list-unstyled">
+                                        <li class="media dropdown-item">
+                                            <span class="success"><i class="ti-user"></i></span>
+                                            <div class="media-body">
+                                                <a href="#">
+                                                    <p>
+                                                        <strong>Martin</strong> has added a <strong>customer</strong> Successfully
+                                                    </p>
+                                                </a>
+                                            </div>
+                                            <span class="notify-time">3:20 am</span>
+                                        </li>
+                                        <li class="media dropdown-item">
+                                            <span class="primary"><i class="ti-shopping-cart"></i></span>
+                                            <div class="media-body">
+                                                <a href="#">
+                                                    <p><strong>Jennifer</strong> purchased Light Dashboard 2.0.</p>
+                                                </a>
+                                            </div>
+                                            <span class="notify-time">3:20 am</span>
+                                        </li>
+                                        <li class="media dropdown-item">
+                                            <span class="danger"><i class="ti-bookmark"></i></span>
+                                            <div class="media-body">
+                                                <a href="#">
+                                                    <p>
+                                                        <strong>Robin</strong> marked a <strong>ticket</strong> as unsolved.
+                                                    </p>
+                                                </a>
+                                            </div>
+                                            <span class="notify-time">3:20 am</span>
+                                        </li>
+                                        <li class="media dropdown-item">
+                                            <span class="primary"><i class="ti-heart"></i></span>
+                                            <div class="media-body">
+                                                <a href="#">
+                                                    <p><strong>David</strong> purchased Light Dashboard 1.0.</p>
+                                                </a>
+                                            </div>
+                                            <span class="notify-time">3:20 am</span>
+                                        </li>
+                                        <li class="media dropdown-item">
+                                            <span class="success"><i class="ti-image"></i></span>
+                                            <div class="media-body">
+                                                <a href="#">
+                                                    <p>
+                                                        <strong> James.</strong> has added a<strong>customer</strong> Successfully
+                                                    </p>
+                                                </a>
+                                            </div>
+                                            <span class="notify-time">3:20 am</span>
+                                        </li>
+                                    </ul>
+                                    <a class="all-notification" href="#">
+                                        See all notifications <i class="ti-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </li>
+
+                            @if (User.Identity != null && User.Identity.IsAuthenticated)
+                            {   
+                                <li class="nav-item">
+                                    <span class="nav-link text-dark">@User.Identity.Name</span>
+                                </li>
+                                <li class="nav-item dropdown header-profile">
+                                    <a class="nav-link" href="#" role="button" data-toggle="dropdown">
+                                        <i class="mdi mdi-account"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item border-0 bg-transparent w-100 text-left">
+                                                <i class="fas fa-sign-out-alt"></i>
+                                                <span class="ml-2">登出</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="nav-item dropdown header-profile">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="mdi mdi-account"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-right">
+                                        <a asp-controller="Account" asp-action="Login" class="dropdown-item">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            <span class="ml-2">登入</span>
+                                        </a>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        <!--**********************************
+            Header end ti-comment-alt
+        ***********************************-->
+        <!--**********************************
+            Sidebar start
+        ***********************************-->
+        <div class="quixnav">
+            <div class="quixnav-scroll">
+                <ul class="metismenu" id="menu">
+                @if (User.Identity != null && User.Identity.IsAuthenticated)
+                {
+                    @if (User.IsInRole("Manager"))
+                    {
+                        @* 主管：差旅審核、審核紀錄、費用與碳排分析、員工管理、費率管理、碳排係數、FAQ 維護 *@
+                        <li class="nav-label">審核與分析</li>
+                        <li>
+                            <a asp-controller="Application" asp-action="Index" aria-expanded="false">
+                               <i class="icon icon-check-2"></i><span class="nav-text">差旅審核 @await Component.InvokeAsync("PendingReviewBadge")</span>
+                            </a>
+                        </li>
+                         <li>
+                            <a asp-controller="Application" asp-action="AuditHistory" aria-expanded="false">
+                               <i class="icon icon-time"></i><span class="nav-text">審核紀錄</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Dashboard" asp-action="Index" aria-expanded="false">
+                               <i class="icon icon-chart-pie-36"></i><span class="nav-text">費用與碳排分析</span>
+                            </a>
+                        </li>
+                        <li class="nav-label">管理功能</li>
+                        <li>
+                            <a asp-controller="Admin" asp-action="Index" aria-expanded="false">
+                                <i class="icon icon-users-mm"></i><span class="nav-text">員工管理</span>
+                            </a>
+                        </li>               
+                        <li>
+                            <a class="has-arrow" href="javascript:void()" aria-expanded="false">
+                                    <i class="icon icon-wallet-90"></i><span class="nav-text">費率管理</span>
+                            </a>
+                            <ul aria-expanded="false">
+                                <li><a asp-controller="Admin" asp-action="MealAllowance">膳雜費率</a></li>
+                                <li><a asp-controller="Admin" asp-action="CarAllowance">自用車補助費率</a></li>                            
+                            </ul>
+                        </li>
+                        <li>
+                            <a asp-controller="Admin" asp-action="EmissionFactors" aria-expanded="false">
+                                    <i class="icon icon-layers-3"></i><span class="nav-text">碳排係數管理</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a asp-controller="Faq" asp-action="Manage" aria-expanded="false">
+                                    <i class="icon icon-book-open-2"></i><span class="nav-text">FAQ 維護</span>
+                            </a>
+                        </li>
+                     }
+                     @if (User.IsInRole("Employee"))
+                     {
+                         @* 員工：差旅申請、申請紀錄、常見問題 *@
+                         <li>
+                             <a asp-controller="Expense" asp-action="Index" aria-expanded="false">
+                                <i class="icon icon-form"></i><span class="nav-text">差旅申請</span>
+                              </a>
+                         </li>
+                         <li>
+                              <a asp-controller="Application" asp-action="Index" aria-expanded="false">
+                                 <i class="icon icon-time"></i><span class="nav-text">申請紀錄</span>
+                              </a>
+                          </li>
+                          <li>
+                              <a asp-controller="Faq" asp-action="Index" aria-expanded="false">                                  
+                                 <i class="icon icon-book-open-2"></i><span class="nav-text">常見問題</span>
+                              </a>
+                          </li>
+                     }
+                }
+                </ul>                
+            </div>
+        </div>
+        <!--**********************************
+            Sidebar end
+        ***********************************-->
+        <!--**********************************
+            Content body start
+        ***********************************-->
+        <div class="content-body">
+            <div class="container-fluid">
+                @{
+                    var success = TempData["Success"];
+                    var error = TempData["Error"];
+                }
+
+                @if (success != null || error != null)
+                {
+                    var isSuccess = success != null;
+                    var message = success ?? error;
+                    var alertClass = isSuccess ? "alert-success" : "alert-danger";
+                    var iconClass = isSuccess ? "fa-check-circle" : "fa-exclamation-circle";
+
+                    <div class="alert @alertClass alert-dismissible fade show custom-alert" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fas @iconClass mr-2"></i>
+                            <span>@message</span>
+                        </div>
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                }
+                @RenderBody()
+            </div>
+        </div>
+        <!--**********************************
+            Content body end
+        ***********************************-->
+        <!--**********************************
+            Footer start
+        ***********************************-->
+        <div class="footer">
+            <div class="copyright">
+                <p>Copyright © Designed &amp; Developed by <a href="#" target="_blank">Quixkit</a> 2019</p>
+            </div>
+        </div>
+        <!--**********************************
+            Footer end
+        ***********************************-->
+        <!--**********************************
+           Support ticket button start
+        ***********************************-->
+        <!--**********************************
+           Support ticket button end
+        ***********************************-->
+
+
+    </div>
+    <!--**********************************
+        Main wrapper end
+    ***********************************-->
+  
+   
+    <script src="~/vendor/global/global.min.js"></script>
+    <script src="~/js/quixnav-init.js"></script>
+    <script src="~/js/custom.min.js"></script>
+    <script src="~/vendor/highlightjs/highlight.pack.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/localization/messages_zh_TW.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+    
+    <script>
+        setTimeout(function () {
+            $('.custom-alert').alert('close');
+        }, 5000);
+    </script>
+    <partial name="_ConfirmModal" />
+    <script src="~/js/confirmModal.js"></script>
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

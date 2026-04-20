@@ -1,0 +1,227 @@
+@{
+    ViewData["Title"] = "自用車補助費率設定";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var currentEffectiveRate = (decimal)(ViewData["CurrentEffectiveRate"] ?? 5.0m);
+    var history = ViewData["History"] as List<StarterM.Models.CarAllowanceHistory> ?? new List<StarterM.Models.CarAllowanceHistory>();
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
+    var maxDate = DateTime.Today.AddDays(7).ToString("yyyy-MM-dd");
+}
+
+@section Styles {
+     @* 引入flatpickr *@
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>       
+        .card {
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        @* 設定CARD標題顏色 *@
+        .bg-cardhead {
+        background-color: #B4A7EF; }
+
+        @* /天 背景色 *@
+        .input-group-text {
+            background-color: #B4A7EF;
+        }
+
+        @* 讓頁碼變小 *@
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            margin: 0 2px;
+        }
+        .dataTables_wrapper .dataTables_paginate .page-link {
+            padding: 2px 6px;
+            font-size: 0.8rem;
+            min-width: 32px; 
+            text-align: center;
+        }
+
+        @* 歷史費率表格對齊 *@
+        #carHistoryTable {
+            width: 100% !important;
+        }
+
+        #carHistoryTable th,
+        #carHistoryTable td {
+            padding-left: 14px;
+            padding-right: 14px;
+            vertical-align: middle;
+        }
+
+        #carHistoryTable thead th {
+            white-space: nowrap;
+        }
+
+        table.dataTable thead th.sorting,
+        table.dataTable thead th.sorting_asc,
+        table.dataTable thead th.sorting_desc {
+            padding-right: 18px !important;
+        }
+
+        #carHistoryTable th:nth-child(4),
+        #carHistoryTable td:nth-child(4) {
+            text-align: center;
+        }
+    </style>
+}
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-12 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="fas fa-car text-primary fa-lg mr-2"></i> 自用車補助費率設定</h1>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header border-bottom bg-cardhead">
+                <div class="d-flex align-items-center">
+                    <h4><i class="fas fa-dollar-sign text-primary mr-2"></i></h4>
+                    <h4><span class="font-weight-bold ">目前生效費率</span></h4>
+                </div>                
+            </div>
+            <div class="card-body text-center">
+                <h3 class="display-3 text-dark font-weight-bold">NT$ @currentEffectiveRate.ToString("N1")</h3>
+                <p class="text-muted">每公里</p>                
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header border-bottom bg-cardhead">
+                <div class="d-flex align-items-center">
+                    <h4><i class="fas fa-edit text-primary mr-2"></i></h4>
+                    <h4><span class="font-weight-bold">更新費率</span></h4>
+                </div>                
+            </div>
+            <div class="card-body">
+                <form asp-action="CarAllowance" method="post" class="confirmable-form" data-confirm-template="確定要將自用車補助費率更新為 NT$ {rate} / 公里？">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                    <div class="form-group">
+                        <label for="rate">新費率（元 / 公里）</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">NT$</span>
+                            </div>
+                            <input type="number" id="rate" name="rate" class="form-control"
+                                   value="@currentEffectiveRate.ToString("N1")"
+                                   min="1" max="10" step="0.1" required />
+                            <div class="input-group-append">
+                                <span class="input-group-text">/ 公里</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">範圍：1 ~ 10 元，可設定小數 1 位</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="effectiveFrom">生效日期</label>
+                        <input type="text"
+                            id="effectiveFrom"
+                            name="effectiveFrom"
+                            class="form-control"
+                            value="@today"
+                            autocomplete="off"
+                            required />                        
+                        <small class="form-text text-muted">可設定 @today ~ @maxDate </small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> 儲存費率
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card border-0 bg-light">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex align-items-center">
+                    <h4><i class="fas fa-lightbulb text-primary mr-2"></i></h4>
+                    <h4><span class="font-weight-bold">說明</span></h4>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> 自用車補助以每公里計算</li>
+                    <li><i class="fas fa-check text-success"></i> 補助金額 = 公里數 × 費率</li>
+                    <li><i class="fas fa-check text-success"></i> 費率更新後，系統會依差旅日期套用生效版本；若同一天新增多筆，以最後新增者為準</li>
+                    <li><i class="fas fa-check text-success"></i> 已建立的申請單不受影響</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex align-items-center">
+                    <h4><i class="fas fa-history text-primary mr-2"></i></h4>
+                    <h4><span class="font-weight-bold">歷史費率</span></h4>
+                </div>
+            </div> 
+            <div class="card-body">
+                <table id="carHistoryTable" class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>費率</th>
+                            <th>生效日期</th>
+                            <th>更新時間</th>
+                            <th>更新者</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var h in history)
+                        {
+                            <tr>
+                                <td data-order="@h.RatePerKm">NT$ @h.RatePerKm.ToString("N1")</td>
+                                <td data-order="@h.EffectiveFrom.ToString("yyyyMMdd")">@h.EffectiveFrom.ToString("yyyy/MM/dd")</td>
+                                <td data-order="@h.UpdatedAt.ToString("yyyyMMddHHmmss")">@h.UpdatedAt.ToLocalTime().ToString("yyyy/MM/dd HH:mm")</td>
+                                <td>@(h.UpdatedBy?.Name ?? "-")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
+    <script>
+        $(function () {
+            var table = $('#carHistoryTable').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[2, 'desc']],
+                autoWidth: false,
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+               columnDefs: [
+                    { targets: 0, width: "20%" },
+                    { targets: 1, width: "24%" },
+                    { targets: 2, width: "32%" },
+                    { targets: 3, width: "24%" }
+                ]
+            });
+            table.columns.adjust().draw();
+        });
+
+        $(function () {
+            flatpickr("#effectiveFrom", {
+                dateFormat: "Y-m-d",
+                locale: "zh",          
+                defaultDate: "@today",
+                minDate: "@today",
+                maxDate: "@maxDate",
+                allowInput: true,
+                clickOpens: true   
+            });
+        });
+    </script>
+}

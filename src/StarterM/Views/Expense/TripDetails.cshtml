@@ -1,0 +1,242 @@
+﻿@model StarterM.ViewModels.TripDetailViewModel
+@{
+    ViewData["Title"] = "差旅明細";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <style>
+        #tripDetails_filter label {
+            margin-bottom: 0;
+        }
+
+        .dataTables_wrapper .row {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        @* alert *@
+        .snapshot-banner {
+            background: #fff8e8;
+            border: 1px solid #f6d79d;
+            border-left: 4px solid #f0ad4e;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 1rem;
+            min-height: 48px;
+        }
+
+        .snapshot-icon {
+            color: #d39e00;
+        }
+
+        .snapshot-text {
+            color: #6b4f1d;
+            font-weight: 500;
+        }
+
+        .snapshot-time {
+            color: #8a8f98;
+        }
+
+        .snapshot-banner .btn {
+            @* white-space: nowrap; *@
+            border-left: 4px solid #f0ad4e;
+        }
+    </style>
+}
+
+
+<div class="row page-titles mx-0">
+    <div class="col-sm-6 p-md-0">
+        <div class="welcome-text">
+            <h1><i class="fas fa-list-alt text-primary fa-lg mr-2"></i>差旅費用明細</h1>             
+            <div class="row mt-3">
+                <div class="col-md-4">
+                    <h4>日期：@Model.Date.ToString("yyyy/MM/dd")</h4>
+                </div>
+                <div class="col-md-8">
+                    <h4>出差事由：@Model.TripReason</h4>
+                </div>                        
+            </div>               
+        </div>
+    </div>
+</div>
+
+@if (Model.IsSnapshotView)
+{
+    <div class="snapshot-banner d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center flex-wrap">
+            <i class="fas fa-history mr-2 snapshot-icon"></i>
+            <span class="snapshot-text mr-3">顯示主管駁回時的紀錄</span>
+        @if (Model.SnapshotCreatedAt.HasValue)
+        {
+            <small class="snapshot-time">
+                紀錄時間：@Model.SnapshotCreatedAt.Value.ToLocalTime().ToString("yyyy/MM/dd HH:mm")
+            </small>
+        }
+        </div>
+    </div>
+}
+
+<div class="trip-detail-container">
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <div class="d-flex justify-content-between align-items-center flex-wrap mt-3 mb-3">
+                    <div class="d-flex align-items-center mb-2 mb-md-0">
+                        @if (Model.CanEditTrip)
+                        {
+                            <a asp-action="AddExpense" asp-route-tripId="@Model.DailyTripId" class="btn btn-primary mr-2">
+                                <i class="fas fa-plus"></i> 新增費用明細
+                            </a>
+
+                            <form asp-action="DeleteTrip"
+                                asp-route-id="@Model.DailyTripId"
+                                method="post"
+                                class="d-inline confirmable-form"
+                                data-confirm="確定要刪除此日差旅及所有明細嗎？">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="fa fa-close color-danger"></i> 刪除此日差旅
+                                </button>
+                            </form>
+                        }
+                    </div>
+
+                    <div class="mb-2 mb-md-0">
+                        @if (Model.ApplicationId.HasValue)
+                        {
+                            <a asp-controller="Application"
+                            asp-action="@Model.ReturnAction"
+                            asp-route-id="@Model.ApplicationId.Value"
+                            class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> 返回申請單
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left"></i> 返回列表
+                            </a>
+                        }
+                    </div>
+                </div>  
+            </div>
+
+
+
+
+            <!-- 費用明細列表 -->
+            @if (Model.Expenses.Any())
+            {
+                <div class="table-responsive">
+                    <div>
+                        <table class="table primary-table-bordered table-hover"  id="tripDetails">
+                            <thead class="thead-primary">
+                                <tr>
+                                    <th>費用分類</th>
+                                    <th>費用項目</th>
+                                    <th class="text-right">金額</th>
+                                    <th class="text-right">公里數</th>
+                                    <th class="text-right">預估碳排</th>
+                                    <th>起訖</th>
+                                    <th>說明</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var expense in Model.Expenses)
+                                {
+                                    <tr>
+                                        <td>@expense.CategoryName</td>
+                                        <td>@expense.ItemName</td>
+                                        <td class="text-right">NT$ @expense.Amount.ToString("N0")</td>
+                                        <td class="text-right">@(expense.DistanceKm.HasValue ? expense.DistanceKm.Value.ToString("N1") : "")</td>
+                                        <td class="text-right">@(expense.EstimatedCo2.HasValue ? $"{expense.EstimatedCo2.Value:N2} kgCO₂" : "")</td>
+                                        <td>
+                                            <div class="row align-items-center">
+                                                <div class="col-5">@((expense.Origin ?? ""))</div>
+                                                @{ var hasRoute = !string.IsNullOrWhiteSpace(expense.Origin) || !string.IsNullOrWhiteSpace(expense.Destination); }
+                                                <div class="col-2 text-center" style="font-size:1rem;">
+                                                    @if (hasRoute)
+                                                    {
+                                                        <span title='@(expense.IsRoundTrip ? "往返" : "單程")'>@(expense.IsRoundTrip ? "↔" : "→")</span>
+                                                    }
+                                                </div>
+                                                <div class="col-5 text-right">@((expense.Destination ?? ""))</div>
+                                            </div>
+                                        </td>
+                                        <td>@(expense.Description ?? "")</td>
+                                        <td>
+                                            @if (Model.CanEditTrip && expense.ExpenseId.HasValue)
+                                            {
+                                                <form asp-action="DeleteExpense" method="post" class="d-inline confirmable-form" data-confirm="確定要刪除此費用明細嗎？">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@expense.ExpenseId.Value" />
+                                                    <input type="hidden" name="tripId" value="@Model.DailyTripId" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fa fa-close color-danger"></i>
+                                                    </button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-weight-bold bg-light border-top">
+                                    <td colspan="2" class="text-right">合計</td>
+                                    <td class="text-right text-primary">NT$ @Model.TotalAmount.ToString("N0")</td>
+                                    <td class="text-right text-primary">@(Model.HasAnyDistance ? Model.TotalDistanceKm.ToString("N1") : "")</td>
+                                    <td class="text-right text-primary">@(Model.TotalEstimatedCo2.HasValue ? $"{Model.TotalEstimatedCo2.Value:N2} kgCO₂" : "")</td>
+                                    <td colspan="3"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="row justify-content-center mt-4">
+                    <div class="col-md-8 col-lg-6">
+                        <div class="alert alert-primary text-center mb-0">
+                            <i class="fas fa-info-circle mr-2"></i>                
+                            目前沒有費用明細，請點擊「新增費用明細」開始。                            
+                        </div>
+                    </div>
+                </div>
+                
+            }
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+        $(function () {
+            var table = $('#tripDetails').DataTable({
+                pageLength: 5,
+                lengthMenu: [5, 10, 25],
+                order: [[1, 'desc']],
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/zh-HANT.json'
+                },
+                columnDefs: [
+                    { orderable: false, targets: [7] },
+                    { searchable: true, targets: [7] }
+                ],
+                dom: '<"row align-items-center mb-3"<"col-sm-6"l><"col-sm-6 d-flex justify-content-end align-items-center"f>>t<"row"<"col-sm-6"i><"col-sm-6"p>>',
+
+                initComplete: function () {
+                    var $filter = $('#tripDetails_filter');
+
+                    $filter.addClass('d-flex align-items-center');
+                    $filter.find('label').addClass('mb-0 mr-2');
+                }
+            });
+        });
+    </script>
+}
