@@ -1,6 +1,7 @@
 # Travel & Carbon Management System
 
-本專題為一套差旅與碳排管理系統，主要解決員工在申報差旅與自用車里程補助時，需要查地圖並手動計算金額的問題，流程繁瑣且容易出錯。
+本專題為一套差旅與碳排管理系統，主要解決員工在申報差旅與自用車里程補助時，需查詢地圖並手動計算金額的問題。  
+透過將距離查詢、補助計算與申請流程整合於單一系統，降低人工計算錯誤，並補充碳排資訊供查詢與分析。
 
 ---
 
@@ -17,49 +18,62 @@
 
 ## 系統設計重點
 
-- 將原本「月報支」流程，改為「明細建立 + 組成申請單」
-- 由 `Application` 統一管理流程狀態，避免多狀態造成邏輯不一致
-- 駁回時保存快照，確保主管與員工檢視資料基準一致
-- 制度資料採版本管理，避免新設定影響歷史資料
-- 使用 Controller、Service 與資料存取分層，提升維護性
+- 將原本以月為單位的報支流程，調整為「先建立差旅明細，再組成申請單」
+- 由 `Application` 統一管理流程狀態，讓狀態判斷集中處理
+- 駁回時保存快照，確保主管與員工檢視資料一致
+- 制度資料採版本管理，避免新設定影響既有資料
+- 將 Controller、Service 與資料存取分開處理
+- 距離計算服務透過 DI 注入，將邏輯與外部服務分離
+
+---
+
+## 實作說明
+
+- 使用 OpenStreetMap 取得地址資訊，並透過 OSRM API 計算兩點距離
+- 補助金額依里程數與費率於後端統一計算
+- 申請駁回時保存當下送審資料，避免後續修改影響審核結果
 - 使用 AJAX / fetch 處理部分互動與資料更新
-- 距離計算服務透過 DI 注入，方便後續替換外部地圖服務
+- 分析功能主要針對差旅費用與碳排資料進行統計
+
+---
+
+## 開發過程中的調整
+
+- 初期規劃為「月結式報支」，實作後改為「差旅明細 + 申請單」，提升使用彈性
+- 駁回流程設計初期因多個狀態來源造成判斷複雜，後續改由 `Application` 統一管理流程狀態
+- 制度資料若直接修改會影響歷史資料，因此改採版本管理方式處理
 
 ---
 
 ## 技術
 
-- Backend: ASP.NET Core MVC / C#
-- ORM: Entity Framework Core
-- Database: SQL Server
-- Frontend: Razor Views / JavaScript / Bootstrap
-- Authentication: ASP.NET Core Identity
-- Map Services: OpenStreetMap / OSRM
-- Charts: Chart.js
+- 後端：ASP.NET Core MVC / C#
+- ORM：Entity Framework Core
+- 資料庫：SQL Server
+- 前端：Razor / JavaScript / Bootstrap
+- 驗證：ASP.NET Core Identity
+- 地圖服務：OpenStreetMap / OSRM
+- 圖表：Chart.js
 
 ---
 
-## Configuration
+## 專案說明
 
-本專案僅作為作品集與功能展示用途。
-
-專案中未使用任何正式環境的真實敏感資訊。
-
-示範資料僅用於展示系統流程，不對應任何真實使用者或正式環境。
+本專案僅作為作品集與功能展示用途。  
+未使用任何正式環境的敏感資料，所有資料皆為測試用途。
 
 ---
 
-## Demo Account
+## 測試帳號
 
 本系統提供測試帳號，方便快速體驗主要功能：
 
 - Manager（主管）
 - Employee（員工）
 
-所有帳號與密碼皆為示範用途，未包含任何實際敏感資料。
-
 ---
 
 ## 專題文件
 
-- [Initial Idea (from Excel)](./docs/Initial_Idea_from_Excel.md)
+完整設計與演進過程請參考：
+- [初始設計與系統演進](./docs/Initial_Idea_from_Excel.md)
